@@ -23,7 +23,9 @@ public class ScoreNormalizationFactory {
         L2ScoreNormalizationTechnique.TECHNIQUE_NAME,
         params -> new L2ScoreNormalizationTechnique(),
         RRFNormalizationTechnique.TECHNIQUE_NAME,
-        params -> new RRFNormalizationTechnique(params, scoreNormalizationUtil)
+        params -> new RRFNormalizationTechnique(params, scoreNormalizationUtil),
+        ZScoreNormalizationTechnique.TECHNIQUE_NAME,
+        params -> new ZScoreNormalizationTechnique()
     );
 
     /**
