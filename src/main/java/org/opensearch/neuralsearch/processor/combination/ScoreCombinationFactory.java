@@ -25,7 +25,13 @@ public class ScoreCombinationFactory {
         HarmonicMeanScoreCombinationTechnique.TECHNIQUE_NAME,
         params -> new HarmonicMeanScoreCombinationTechnique(params, scoreCombinationUtil),
         GeometricMeanScoreCombinationTechnique.TECHNIQUE_NAME,
-        params -> new GeometricMeanScoreCombinationTechnique(params, scoreCombinationUtil)
+        params -> new GeometricMeanScoreCombinationTechnique(params, scoreCombinationUtil),
+        ArithmeticMeanScoreCombinationWithNegativeSupportTechnique.TECHNIQUE_NAME,
+        params -> new ArithmeticMeanScoreCombinationWithNegativeSupportTechnique(params, scoreCombinationUtil),
+        GeometricMeanScoreCombinationWithNegativeSupportTechnique.TECHNIQUE_NAME,
+        params -> new GeometricMeanScoreCombinationWithNegativeSupportTechnique(params, scoreCombinationUtil),
+        HarmonicMeanScoreCombinationWithNegativeSupportTechnique.TECHNIQUE_NAME,
+        params -> new HarmonicMeanScoreCombinationWithNegativeSupportTechnique(params, scoreCombinationUtil)
     );
 
     /**
