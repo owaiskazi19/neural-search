@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-
 public class ArithmeticMeanScoreCombinationWithNegativeSupportTechnique implements ScoreCombinationTechnique {
     @ToString.Include
     public static final String TECHNIQUE_NAME = "arithmetic_mean_with_negatives_support";

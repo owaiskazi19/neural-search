@@ -34,4 +34,12 @@ public class ScoreNormalizationFactoryTests extends OpenSearchQueryTestCase {
         );
         assertThat(illegalArgumentException.getMessage(), containsString("provided normalization technique is not supported"));
     }
+
+    public void testZScoreNorm_whenCreatingByName_thenReturnCorrectInstance() {
+        ScoreNormalizationFactory scoreNormalizationFactory = new ScoreNormalizationFactory();
+        ScoreNormalizationTechnique scoreNormalizationTechnique = scoreNormalizationFactory.createNormalization("z_score");
+
+        assertNotNull(scoreNormalizationTechnique);
+        assertTrue(scoreNormalizationTechnique instanceof ZScoreNormalizationTechnique);
+    }
 }
