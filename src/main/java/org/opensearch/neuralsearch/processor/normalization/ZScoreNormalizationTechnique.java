@@ -22,6 +22,8 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
 
     public static final String TECHNIQUE_NAME = "z_score";
     private static final float SINGLE_RESULT_SCORE = 1.0f;
+    private static final float MIN_BOUND = -5.0f;
+    private static final float MAX_BOUND = 5.0f;
 
     @Override
     public void normalize(final List<CompoundTopDocs> queryTopDocs) {
@@ -153,7 +155,13 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
         if (Floats.compare(mean, score) == 0) {
             return SINGLE_RESULT_SCORE;
         }
-        return (score - mean) / standardDeviation;
+        float normalizedScore = (score - mean) / standardDeviation;
+        if (normalizedScore < MIN_BOUND) {
+            return MIN_BOUND;
+        } else if (normalizedScore > MAX_BOUND) {
+            return MAX_BOUND;
+        }
+        return normalizedScore;
     }
 
 }
