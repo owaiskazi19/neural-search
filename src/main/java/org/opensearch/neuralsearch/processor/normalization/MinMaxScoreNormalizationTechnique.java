@@ -63,7 +63,7 @@ public class MinMaxScoreNormalizationTechnique implements ScoreNormalizationTech
         }
     }
 
-    private float[] getMaxScores(final List<CompoundTopDocs> queryTopDocs, final int numOfSubqueries) {
+    public static float[] getMaxScores(final List<CompoundTopDocs> queryTopDocs, final int numOfSubqueries) {
         float[] maxScores = new float[numOfSubqueries];
         Arrays.fill(maxScores, Float.MIN_VALUE);
         for (CompoundTopDocs compoundQueryTopDocs : queryTopDocs) {
@@ -84,7 +84,7 @@ public class MinMaxScoreNormalizationTechnique implements ScoreNormalizationTech
         return maxScores;
     }
 
-    private float[] getMinScores(final List<CompoundTopDocs> queryTopDocs, final int numOfScores) {
+    public static float[] getMinScores(final List<CompoundTopDocs> queryTopDocs, final int numOfScores) {
         float[] minScores = new float[numOfScores];
         Arrays.fill(minScores, Float.MAX_VALUE);
         for (CompoundTopDocs compoundQueryTopDocs : queryTopDocs) {

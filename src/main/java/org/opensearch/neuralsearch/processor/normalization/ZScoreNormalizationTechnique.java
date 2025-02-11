@@ -22,6 +22,9 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
 
     public static final String TECHNIQUE_NAME = "z_score";
     private static final float SINGLE_RESULT_SCORE = 1.0f;
+    private static final float MIN_BOUND = -7.0f;
+    private static final float MAX_BOUND = 7.0f;
+    private static final float MIN_SCORE = 0.001f;
 
     @Override
     public void normalize(final List<CompoundTopDocs> queryTopDocs) {
@@ -32,6 +35,11 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
         long[] elementsPerSubquery = findNumberOfElementsPerSubQuery(queryTopDocs, numOfSubqueries);
         float[] meanPerSubQuery = findMeanPerSubquery(sumPerSubquery, elementsPerSubquery);
         float[] stdPerSubquery = findStdPerSubquery(queryTopDocs, meanPerSubQuery, elementsPerSubquery, numOfSubqueries);
+        // get min scores for each sub query
+        float[] minScoresPerSubquery = MinMaxScoreNormalizationTechnique.getMinScores(queryTopDocs, numOfSubqueries);
+
+        // get max scores for each sub query
+        float[] maxScoresPerSubquery = MinMaxScoreNormalizationTechnique.getMaxScores(queryTopDocs, numOfSubqueries);
 
         // do normalization using actual score and z-scores for corresponding sub query
         for (CompoundTopDocs compoundQueryTopDocs : queryTopDocs) {
@@ -42,7 +50,13 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             for (int j = 0; j < topDocsPerSubQuery.size(); j++) {
                 TopDocs subQueryTopDoc = topDocsPerSubQuery.get(j);
                 for (ScoreDoc scoreDoc : subQueryTopDoc.scoreDocs) {
-                    scoreDoc.score = normalizeSingleScore(scoreDoc.score, stdPerSubquery[j], meanPerSubQuery[j]);
+                    scoreDoc.score = normalizeSingleScore(
+                        scoreDoc.score,
+                        stdPerSubquery[j],
+                        meanPerSubQuery[j],
+                        minScoresPerSubquery[j],
+                        maxScoresPerSubquery[j]
+                    );
                 }
             }
         }
@@ -148,12 +162,25 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
         return sum;
     }
 
-    private static float normalizeSingleScore(final float score, final float standardDeviation, final float mean) {
+    private static float normalizeSingleScore(
+        final float score,
+        final float standardDeviation,
+        final float mean,
+        final float minScore,
+        final float maxScore
+    ) {
         // edge case when there is only one score and min and max scores are same
         if (Floats.compare(mean, score) == 0) {
             return SINGLE_RESULT_SCORE;
         }
-        return (score - mean) / standardDeviation;
+        float normalizedScore = (score - mean) / standardDeviation;
+        if (normalizedScore < MIN_BOUND) {
+            normalizedScore = MIN_BOUND;
+        } else if (normalizedScore > MAX_BOUND) {
+            normalizedScore = MAX_BOUND;
+        }
+        float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
+        return finalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
     }
 
 }
