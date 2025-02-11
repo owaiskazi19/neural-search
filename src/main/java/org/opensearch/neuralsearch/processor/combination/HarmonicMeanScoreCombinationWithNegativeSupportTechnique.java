@@ -12,7 +12,7 @@ import java.util.Set;
 
 public class HarmonicMeanScoreCombinationWithNegativeSupportTechnique implements ScoreCombinationTechnique {
     @ToString.Include
-    public static final String TECHNIQUE_NAME = "harmonic_mean_with_negative_support";
+    public static final String TECHNIQUE_NAME = "harmonic_mean_with_negatives_support";
     public static final String PARAM_NAME_WEIGHTS = "weights";
     private static final Set<String> SUPPORTED_PARAMS = Set.of(PARAM_NAME_WEIGHTS);
     private static final Float ZERO_SCORE = 0.0f;
