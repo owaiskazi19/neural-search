@@ -174,11 +174,11 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             return SINGLE_RESULT_SCORE;
         }
         float normalizedScore = (score - mean) / standardDeviation;
-        if (normalizedScore < MIN_BOUND) {
+        /*if (normalizedScore < MIN_BOUND) {
             normalizedScore = MIN_BOUND;
         } else if (normalizedScore > MAX_BOUND) {
             normalizedScore = MAX_BOUND;
-        }
+        }*/
         float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
         return finalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
     }
