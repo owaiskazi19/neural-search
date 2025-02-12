@@ -4,6 +4,7 @@
  */
 package org.opensearch.neuralsearch.processor.normalization;
 
+import lombok.extern.log4j.Log4j2;
 import org.opensearch.neuralsearch.processor.CompoundTopDocs;
 import java.util.Arrays;
 import java.util.List;
@@ -18,6 +19,7 @@ import com.google.common.primitives.Floats;
 import java.util.List;
 import java.util.Objects;
 
+@Log4j2
 public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique {
 
     public static final String TECHNIQUE_NAME = "z_score";
@@ -174,13 +176,23 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             return SINGLE_RESULT_SCORE;
         }
         float normalizedScore = (score - mean) / standardDeviation;
-        if (normalizedScore < MIN_BOUND) {
+        /*if (normalizedScore < MIN_BOUND) {
             normalizedScore = MIN_BOUND;
         } else if (normalizedScore > MAX_BOUND) {
             normalizedScore = MAX_BOUND;
-        }
+        }*/
+        log.info("NORMALIZATION SCORE 1 {}", normalizedScore);
         float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
-        return finalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
+        log.info("NORMALIZATION SCORE 2 {}", finalNormalizedScore);
+        float finalfinalNormalizedScore;
+        if (finalNormalizedScore == 0.0f) {
+            finalfinalNormalizedScore = MIN_SCORE;
+        } else {
+            finalfinalNormalizedScore = finalNormalizedScore;
+        }
+        //float finalfinalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
+        log.info("NORMALIZATION SCORE 3 {}", finalfinalNormalizedScore);
+        return finalfinalNormalizedScore;
     }
 
 }
