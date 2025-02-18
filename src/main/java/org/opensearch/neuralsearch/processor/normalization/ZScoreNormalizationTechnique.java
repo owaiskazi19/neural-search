@@ -176,14 +176,16 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             return SINGLE_RESULT_SCORE;
         }
         float normalizedScore = (score - mean) / standardDeviation;
-        /*if (normalizedScore < MIN_BOUND) {
+        if (normalizedScore < MIN_BOUND) {
             normalizedScore = MIN_BOUND;
         } else if (normalizedScore > MAX_BOUND) {
             normalizedScore = MAX_BOUND;
-        }*/
-        log.info("NORMALIZATION SCORE 1 {}", normalizedScore);
-        float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
-        log.info("NORMALIZATION SCORE 2 {}", finalNormalizedScore);
+        }
+        return normalizedScore;
+//        log.info("NORMALIZATION SCORE 1 {}", normalizedScore);
+        //float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
+        //return finalNormalizedScore;
+        /*log.info("NORMALIZATION SCORE 2 {}", finalNormalizedScore);
         float finalfinalNormalizedScore;
         if (finalNormalizedScore == 0.0f) {
             finalfinalNormalizedScore = MIN_SCORE;
@@ -191,8 +193,8 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             finalfinalNormalizedScore = finalNormalizedScore;
         }
         //float finalfinalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
-        log.info("NORMALIZATION SCORE 3 {}", finalfinalNormalizedScore);
-        return finalfinalNormalizedScore;
+        log.info("NORMALIZATION SCORE 3 {}", finalfinalNormalizedScore);*/
+        //return finalfinalNormalizedScore;
     }
 
 }
