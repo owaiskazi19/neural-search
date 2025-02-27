@@ -94,7 +94,7 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             List<TopDocs> topDocsPerSubQuery = compoundQueryTopDocs.getTopDocs();
             int subQueryIndex = 0;
             for (TopDocs topDocs : topDocsPerSubQuery) {
-                numberOfElementsPerSubQuery[subQueryIndex++] += topDocs.totalHits.value();
+                numberOfElementsPerSubQuery[subQueryIndex++] += topDocs.totalHits.value;
             }
         }
 
