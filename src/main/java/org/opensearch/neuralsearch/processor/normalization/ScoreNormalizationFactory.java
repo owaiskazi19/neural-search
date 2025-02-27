@@ -20,7 +20,9 @@ public class ScoreNormalizationFactory {
         L2ScoreNormalizationTechnique.TECHNIQUE_NAME,
         new L2ScoreNormalizationTechnique(),
         ZScoreNormalizationTechnique.TECHNIQUE_NAME,
-        new ZScoreNormalizationTechnique()
+        new ZScoreNormalizationTechnique(),
+        ZScoreRobustNormalizationTechnique.TECHNIQUE_NAME,
+        new ZScoreRobustNormalizationTechnique()
     );
 
     /**

@@ -37,11 +37,6 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
         long[] elementsPerSubquery = findNumberOfElementsPerSubQuery(queryTopDocs, numOfSubqueries);
         float[] meanPerSubQuery = findMeanPerSubquery(sumPerSubquery, elementsPerSubquery);
         float[] stdPerSubquery = findStdPerSubquery(queryTopDocs, meanPerSubQuery, elementsPerSubquery, numOfSubqueries);
-        // get min scores for each sub query
-        float[] minScoresPerSubquery = MinMaxScoreNormalizationTechnique.getMinScores(queryTopDocs, numOfSubqueries);
-
-        // get max scores for each sub query
-        float[] maxScoresPerSubquery = MinMaxScoreNormalizationTechnique.getMaxScores(queryTopDocs, numOfSubqueries);
 
         // do normalization using actual score and z-scores for corresponding sub query
         for (CompoundTopDocs compoundQueryTopDocs : queryTopDocs) {
@@ -55,9 +50,7 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
                     scoreDoc.score = normalizeSingleScore(
                         scoreDoc.score,
                         stdPerSubquery[j],
-                        meanPerSubQuery[j],
-                        minScoresPerSubquery[j],
-                        maxScoresPerSubquery[j]
+                        meanPerSubQuery[j]
                     );
                 }
             }
@@ -101,7 +94,7 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
             List<TopDocs> topDocsPerSubQuery = compoundQueryTopDocs.getTopDocs();
             int subQueryIndex = 0;
             for (TopDocs topDocs : topDocsPerSubQuery) {
-                numberOfElementsPerSubQuery[subQueryIndex++] += topDocs.totalHits.value;
+                numberOfElementsPerSubQuery[subQueryIndex++] += topDocs.totalHits.value();
             }
         }
 
@@ -164,37 +157,13 @@ public class ZScoreNormalizationTechnique implements ScoreNormalizationTechnique
         return sum;
     }
 
-    private static float normalizeSingleScore(
-        final float score,
-        final float standardDeviation,
-        final float mean,
-        final float minScore,
-        final float maxScore
-    ) {
+    private static float normalizeSingleScore(final float score, final float standardDeviation, final float mean) {
         // edge case when there is only one score and min and max scores are same
         if (Floats.compare(mean, score) == 0) {
             return SINGLE_RESULT_SCORE;
         }
         float normalizedScore = (score - mean) / standardDeviation;
-        if (normalizedScore < MIN_BOUND) {
-            normalizedScore = MIN_BOUND;
-        } else if (normalizedScore > MAX_BOUND) {
-            normalizedScore = MAX_BOUND;
-        }
-        return normalizedScore;
-//        log.info("NORMALIZATION SCORE 1 {}", normalizedScore);
-        //float finalNormalizedScore = (normalizedScore - minScore) / (maxScore - minScore);
-        //return finalNormalizedScore;
-        /*log.info("NORMALIZATION SCORE 2 {}", finalNormalizedScore);
-        float finalfinalNormalizedScore;
-        if (finalNormalizedScore == 0.0f) {
-            finalfinalNormalizedScore = MIN_SCORE;
-        } else {
-            finalfinalNormalizedScore = finalNormalizedScore;
-        }
-        //float finalfinalNormalizedScore == 0.0f ? MIN_SCORE : finalNormalizedScore;
-        log.info("NORMALIZATION SCORE 3 {}", finalfinalNormalizedScore);*/
-        //return finalfinalNormalizedScore;
+        return normalizedScore < 0.0f ? MIN_SCORE : normalizedScore;
     }
 
 }
