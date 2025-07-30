@@ -29,6 +29,7 @@ import org.opensearch.index.query.QueryRewriteContext;
 import org.opensearch.index.query.QueryCoordinatorContext;
 import org.opensearch.index.query.QueryShardContext;
 import org.opensearch.neuralsearch.ml.MLCommonsClientAccessor;
+import org.opensearch.neuralsearch.settings.NeuralSearchSettingsAccessor;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.common.xcontent.LoggingDeprecationHandler;
 import org.opensearch.neuralsearch.util.NeuralSearchClusterUtil;
@@ -70,8 +71,12 @@ public final class AgenticSearchQueryBuilder extends AbstractQueryBuilder<Agenti
     // client to invoke ml-common APIs
     private static MLCommonsClientAccessor ML_CLIENT;
 
-    public static void initialize(MLCommonsClientAccessor mlClient) {
+    // setting accessor to retrieve agentic search feature flag
+    private static NeuralSearchSettingsAccessor SETTINGS_ACCESSOR;
+
+    public static void initialize(MLCommonsClientAccessor mlClient, NeuralSearchSettingsAccessor settingsAccessor) {
         AgenticSearchQueryBuilder.ML_CLIENT = mlClient;
+        AgenticSearchQueryBuilder.SETTINGS_ACCESSOR = settingsAccessor;
     }
 
     // For testing purposes
@@ -163,6 +168,13 @@ public final class AgenticSearchQueryBuilder extends AbstractQueryBuilder<Agenti
 
     @Override
     protected QueryBuilder doRewrite(QueryRewriteContext queryRewriteContext) throws IOException {
+        // feature flag check
+        if (!SETTINGS_ACCESSOR.isAgenticSearchEnabled()) {
+            throw new IllegalStateException(
+                "Agentic search is currently disabled. Enable it using the 'plugins.neural_search.agentic_search_enabled' setting."
+            );
+        }
+
         // Idempotent check - if already rewritten, return the cached result
         if (rewrittenQuery != null) {
             return rewrittenQuery;

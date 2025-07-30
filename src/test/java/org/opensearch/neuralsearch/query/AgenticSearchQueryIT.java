@@ -28,6 +28,7 @@ public class AgenticSearchQueryIT extends BaseNeuralSearchIT {
     public void setUp() throws Exception {
         super.setUp();
         updateClusterSettings();
+        updateClusterSettings("plugins.neural_search.agentic_search_enabled", true);
         if (TEST_AGENT_ID == null) {
             try {
                 String connectorId = createTestConnector();
