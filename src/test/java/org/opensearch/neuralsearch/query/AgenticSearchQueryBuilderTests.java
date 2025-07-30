@@ -16,6 +16,7 @@ import org.opensearch.test.OpenSearchTestCase;
 import org.opensearch.core.xcontent.XContentParser;
 import org.opensearch.common.xcontent.XContentType;
 import org.opensearch.neuralsearch.ml.MLCommonsClientAccessor;
+import org.opensearch.neuralsearch.settings.NeuralSearchSettingsAccessor;
 import org.opensearch.neuralsearch.util.NeuralSearchClusterUtil;
 import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.cluster.ClusterState;
@@ -114,6 +115,10 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
     }
 
     public void testDoRewrite_withoutMLClient() {
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mock(MLCommonsClientAccessor.class), mockSettingsAccessor);
+
         AgenticSearchQueryBuilder.resetMLClient();
 
         AgenticSearchQueryBuilder queryBuilder = new AgenticSearchQueryBuilder().queryText(QUERY_TEXT).agentId(AGENT_ID);
@@ -126,7 +131,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
     }
 
     public void testDoRewrite_withNonCoordinatorContext() {
-        AgenticSearchQueryBuilder.initialize(mock(MLCommonsClientAccessor.class));
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mock(MLCommonsClientAccessor.class), mockSettingsAccessor);
 
         AgenticSearchQueryBuilder queryBuilder = new AgenticSearchQueryBuilder().queryText(QUERY_TEXT).agentId(AGENT_ID);
 
@@ -227,7 +234,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
     public void testDoRewrite_success() throws IOException {
         MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
-        AgenticSearchQueryBuilder.initialize(mockMLClient);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
 
         // Mock cluster service and related components
         ClusterService mockClusterService = mock(ClusterService.class);
@@ -278,7 +287,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
     public void testDoRewrite_withMalformedAgentResponse() throws IOException {
         MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
-        AgenticSearchQueryBuilder.initialize(mockMLClient);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
 
         QueryCoordinatorContext mockContext = mock(QueryCoordinatorContext.class);
 
@@ -297,7 +308,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
     public void testDoRewrite_withAgentFailure() throws IOException {
         MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
-        AgenticSearchQueryBuilder.initialize(mockMLClient);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
 
         QueryCoordinatorContext mockContext = mock(QueryCoordinatorContext.class);
 
@@ -316,7 +329,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
     public void testDoRewrite_withMissingQueryField() throws IOException {
         MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
-        AgenticSearchQueryBuilder.initialize(mockMLClient);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
 
         QueryCoordinatorContext mockContext = mock(QueryCoordinatorContext.class);
 
@@ -335,7 +350,9 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
     public void testDoRewrite_idempotentCheck() throws IOException {
         MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
-        AgenticSearchQueryBuilder.initialize(mockMLClient);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
 
         QueryCoordinatorContext mockContext = mock(QueryCoordinatorContext.class);
 
@@ -349,5 +366,25 @@ public class AgenticSearchQueryBuilderTests extends OpenSearchTestCase {
 
         assertNotNull(result);
         verify(mockMLClient, never()).executeAgent(anyString(), anyMap(), any(ActionListener.class));
+    }
+
+    public void testDoRewrite_withAgenticSearchDisabled() throws IOException {
+        MLCommonsClientAccessor mockMLClient = mock(MLCommonsClientAccessor.class);
+        NeuralSearchSettingsAccessor mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(false);
+        AgenticSearchQueryBuilder.initialize(mockMLClient, mockSettingsAccessor);
+
+        AgenticSearchQueryBuilder queryBuilder = new AgenticSearchQueryBuilder().queryText(QUERY_TEXT).agentId(AGENT_ID);
+
+        QueryRewriteContext mockContext = mock(QueryRewriteContext.class);
+
+        IllegalStateException exception = expectThrows(IllegalStateException.class, () -> queryBuilder.doRewrite(mockContext));
+
+        assertEquals(
+            "Exception message should match",
+            "Agentic search is currently disabled. Enable it using the 'plugins.neural_search.agentic_search_enabled' setting.",
+            exception.getMessage()
+        );
+
     }
 }
