@@ -25,6 +25,7 @@ import org.opensearch.cluster.metadata.Metadata;
 import org.opensearch.cluster.service.ClusterService;
 import org.opensearch.common.compress.CompressedXContent;
 import org.opensearch.neuralsearch.util.NeuralSearchClusterUtil;
+import org.opensearch.neuralsearch.settings.NeuralSearchSettingsAccessor;
 
 import static org.mockito.Mockito.when;
 
@@ -41,6 +42,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.when;
 
 public class QueryRewriterProcessorTests extends OpenSearchTestCase {
 
@@ -51,6 +53,7 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
     private NamedXContentRegistry mockXContentRegistry;
     private QueryRewriterProcessor processor;
     private PipelineProcessingContext mockContext;
+    private NeuralSearchSettingsAccessor mockSettingsAccessor;
 
     @Override
     public void setUp() throws Exception {
@@ -58,9 +61,15 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
         mockMLClient = mock(MLCommonsClientAccessor.class);
         mockXContentRegistry = mock(NamedXContentRegistry.class);
         mockContext = mock(PipelineProcessingContext.class);
+        mockSettingsAccessor = mock(NeuralSearchSettingsAccessor.class);
+        when(mockSettingsAccessor.isAgenticSearchEnabled()).thenReturn(true);
 
         // Use factory to create processor since constructor is private
-        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, mockXContentRegistry);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(
+            mockMLClient,
+            mockXContentRegistry,
+            mockSettingsAccessor
+        );
         Map<String, Object> config = new HashMap<>();
         config.put("agent_id", AGENT_ID);
         processor = factory.create(null, "test-tag", "test-description", false, config, null);
@@ -177,7 +186,11 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
     }
 
     public void testFactory_create() {
-        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, mockXContentRegistry);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(
+            mockMLClient,
+            mockXContentRegistry,
+            mockSettingsAccessor
+        );
 
         Map<String, Object> config = new HashMap<>();
         config.put("agent_id", AGENT_ID);
@@ -189,7 +202,11 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
     }
 
     public void testFactory_create_missingAgentId() {
-        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, mockXContentRegistry);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(
+            mockMLClient,
+            mockXContentRegistry,
+            mockSettingsAccessor
+        );
 
         Map<String, Object> config = new HashMap<>();
 
@@ -202,7 +219,11 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
     }
 
     public void testFactory_create_emptyAgentId() {
-        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, mockXContentRegistry);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(
+            mockMLClient,
+            mockXContentRegistry,
+            mockSettingsAccessor
+        );
 
         Map<String, Object> config = new HashMap<>();
         config.put("agent_id", "");
@@ -213,6 +234,26 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
         );
 
         assertEquals("agent_id is required for query_rewriter processor", exception.getMessage());
+    }
+
+    public void testFactory_create_feature_disabled() {
+        NeuralSearchSettingsAccessor accessor = mock(NeuralSearchSettingsAccessor.class);
+        when(accessor.isAgenticSearchEnabled()).thenReturn(false);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, mockXContentRegistry, accessor);
+
+        Map<String, Object> config = new HashMap<>();
+        config.put("agent_id", AGENT_ID);
+
+        IllegalStateException exception = expectThrows(
+            IllegalStateException.class,
+            () -> factory.create(null, "test-tag", "test-description", false, config, null)
+        );
+
+        assertEquals(
+            "Exception message should match",
+            "Agentic search is currently disabled. Enable it using the 'plugins.neural_search.agentic_search_enabled' setting.",
+            exception.getMessage()
+        );
     }
 
     public void testProcessRequestAsync_withAgenticQuery_success() throws IOException {
@@ -238,7 +279,7 @@ public class QueryRewriterProcessorTests extends OpenSearchTestCase {
         entries.add(new NamedXContentRegistry.Entry(QueryBuilder.class, new ParseField("match"), MatchQueryBuilder::fromXContent));
         NamedXContentRegistry registry = new NamedXContentRegistry(entries);
 
-        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, registry);
+        QueryRewriterProcessor.Factory factory = new QueryRewriterProcessor.Factory(mockMLClient, registry, mockSettingsAccessor);
         Map<String, Object> config = new HashMap<>();
         config.put("agent_id", AGENT_ID);
         QueryRewriterProcessor testProcessor = factory.create(null, "test-tag", "test-description", false, config, null);
