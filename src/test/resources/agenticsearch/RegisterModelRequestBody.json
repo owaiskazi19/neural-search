@@ -1,0 +1,7 @@
+{
+  "name": "Bedrock Claude model",
+  "function_name": "remote",
+  "model_group_id": "%s",
+  "description": "test model",
+  "connector_id": "%s"
+}
