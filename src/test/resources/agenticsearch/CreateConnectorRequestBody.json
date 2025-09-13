@@ -1,0 +1,25 @@
+{
+  "name": "LLM Judgments Connector",
+  "description": "Connector for LLM-based judgment generation",
+  "version": "1.0.0",
+  "protocol": "http",
+  "parameters": {
+    "endpoint": "http://localhost:11434",
+    "model": "phi3:mini"
+  },
+  "credential": {
+    "access_key": "",
+    "secret_key": ""
+  },
+  "actions": [
+    {
+      "action_type": "predict",
+      "method": "POST",
+      "url": "http://localhost:11434/v1/chat/completions",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "request_body": "{ \"model\": \"phi3:mini\", \"messages\": ${parameters.messages}, \"temperature\": 0.1, \"max_tokens\": 100, \"stream\": false }"
+    }
+  ]
+}

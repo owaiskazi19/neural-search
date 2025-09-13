@@ -129,7 +129,7 @@ jobs:
           echo "Endpoint: http://localhost:11434/v1/chat/completions"
           echo "Model: phi3:mini"
           echo "API Format: Native OpenAI compatibility"
-          ./gradlew integTest --tests "*LLMJudgmentGenerationIT" -Dtests.cluster.llm.enabled=true
+          ./gradlew ':integTest' -Dtest_agentic=true --tests "org.opensearch.neuralsearch.query.AgenticSearchQueryBuilderIT"
       - name: Debug on failure
         if: failure()
         run: |
