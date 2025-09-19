@@ -635,9 +635,11 @@ public class MLCommonsClientAccessorTests extends OpenSearchTestCase {
         assertEquals(expectedMessage, resultCaptor.getValue().getMessage());
     }
 
-    public void testExecuteAgent_Success() {
+    public void testExecuteAgent_Success() throws Exception {
         final String agentId = "test-agent-id";
-        final Map<String, String> parameters = Map.of("query_text", "test query", "index_mapping", "{}");
+        final Map<String, String> parameters = new java.util.HashMap<>();
+        parameters.put("query_text", "test query");
+        parameters.put("index_mapping", "{}");
         final ActionListener<String> listener = mock(ActionListener.class);
         final String expectedResponse = "{\"query\": {\"match\": {\"field\": \"value\"}}}";
 
@@ -651,16 +653,24 @@ public class MLCommonsClientAccessorTests extends OpenSearchTestCase {
             return null;
         }).when(client).execute(any(), any(), any());
 
-        accessor.executeAgent(agentId, parameters, listener);
+        accessor.executeAgent(
+            agentId,
+            "conversational",
+            false,
+            mock(org.opensearch.core.xcontent.NamedXContentRegistry.class),
+            parameters,
+            listener
+        );
 
         verify(client).execute(any(), any(), any());
         verify(listener).onResponse(expectedResponse);
         Mockito.verifyNoMoreInteractions(listener);
     }
 
-    public void testExecuteAgent_Failure() {
+    public void testExecuteAgent_Failure() throws Exception {
         final String agentId = "test-agent-id";
-        final Map<String, String> parameters = Map.of("query_text", "test query");
+        final Map<String, String> parameters = new java.util.HashMap<>();
+        parameters.put("query_text", "test query");
         final ActionListener<String> listener = mock(ActionListener.class);
         final RuntimeException exception = new RuntimeException("Agent execution failed");
 
@@ -670,16 +680,24 @@ public class MLCommonsClientAccessorTests extends OpenSearchTestCase {
             return null;
         }).when(client).execute(any(), any(), any());
 
-        accessor.executeAgent(agentId, parameters, listener);
+        accessor.executeAgent(
+            agentId,
+            "conversational",
+            false,
+            mock(org.opensearch.core.xcontent.NamedXContentRegistry.class),
+            parameters,
+            listener
+        );
 
         verify(client).execute(any(), any(), any());
         verify(listener).onFailure(exception);
         Mockito.verifyNoMoreInteractions(listener);
     }
 
-    public void testExecuteAgent_WithRetry() {
+    public void testExecuteAgent_WithRetry() throws Exception {
         final String agentId = "test-agent-id";
-        final Map<String, String> parameters = Map.of("query_text", "test query");
+        final Map<String, String> parameters = new java.util.HashMap<>();
+        parameters.put("query_text", "test query");
         final ActionListener<String> listener = mock(ActionListener.class);
         final NodeNotConnectedException nodeNotConnectedException = new NodeNotConnectedException(
             mock(DiscoveryNode.class),
@@ -692,7 +710,14 @@ public class MLCommonsClientAccessorTests extends OpenSearchTestCase {
             return null;
         }).when(client).execute(any(), any(), any());
 
-        accessor.executeAgent(agentId, parameters, listener);
+        accessor.executeAgent(
+            agentId,
+            "conversational",
+            false,
+            mock(org.opensearch.core.xcontent.NamedXContentRegistry.class),
+            parameters,
+            listener
+        );
 
         // Verify client.execute is called 4 times (1 initial + 3 retries)
         verify(client, times(4)).execute(any(), any(), any());
@@ -703,7 +728,11 @@ public class MLCommonsClientAccessorTests extends OpenSearchTestCase {
     private ModelTensorOutput createModelTensorOutputWithResult(String result) {
         final List<ModelTensors> tensorsList = new ArrayList<>();
         final List<ModelTensor> mlModelTensorList = new ArrayList<>();
-        final ModelTensor tensor = new ModelTensor("response", null, null, null, null, result, Map.of());
+        // Create proper conversational agent response format
+        String responseJson = "{\"response\":\""
+            + "{\\\"dsl_query\\\":{\\\"query\\\":{\\\"match\\\":{\\\"field\\\":\\\"value\\\"}}}}\""
+            + "}";
+        final ModelTensor tensor = new ModelTensor("response", null, null, null, null, null, Map.of("response", responseJson));
         mlModelTensorList.add(tensor);
         final ModelTensors modelTensors = new ModelTensors(mlModelTensorList);
         tensorsList.add(modelTensors);
