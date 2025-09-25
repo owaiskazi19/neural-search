@@ -221,7 +221,7 @@ public class NeuralSearchTests extends OpenSearchQueryTestCase {
     public void testSearchExts() {
         List<SearchExtSpec<?>> searchExts = plugin.getSearchExts();
 
-        assertEquals(1, searchExts.size());
+        assertEquals(2, searchExts.size());
     }
 
     public void testExecutionBuilders() {

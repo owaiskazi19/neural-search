@@ -5,14 +5,12 @@
 package org.opensearch.neuralsearch.ml;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 
 /**
- * DTO object to hold data in AgentInfoDTO class
+ * DTO containing agent information
  */
 @AllArgsConstructor
-@Builder
 @Getter
 public class AgentInfoDTO {
     private final String type;

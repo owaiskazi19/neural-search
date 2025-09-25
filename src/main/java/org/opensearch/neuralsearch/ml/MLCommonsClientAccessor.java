@@ -520,7 +520,7 @@ public class MLCommonsClientAccessor {
         @NonNull String agentId,
         @NonNull AgentInfoDTO agentInfo,
         @NonNull NamedXContentRegistry xContentRegistry,
-        @NonNull ActionListener<String> listener
+        @NonNull ActionListener<AgentExecutionDTO> listener
     ) throws IOException {
         retryableExecuteAgent(request, agenticQuery, agentId, agentInfo, xContentRegistry, 0, listener);
     }
@@ -535,7 +535,7 @@ public class MLCommonsClientAccessor {
         AgentInfoDTO agentInfo,
         NamedXContentRegistry xContentRegistry,
         int retryTime,
-        ActionListener<String> listener
+        ActionListener<AgentExecutionDTO> listener
     ) throws IOException {
         String agentType = agentInfo.getType();
         boolean hasSystemPrompt = agentInfo.isHasSystemPrompt();
@@ -583,15 +583,18 @@ public class MLCommonsClientAccessor {
 
         mlClient.execute(FunctionName.AGENT, agentMLInput, ActionListener.wrap(response -> {
             MLOutput mlOutput = (MLOutput) response.getOutput();
-            String result = null;
+            String dslQuery = null;
+            String agentStepsSummary = null;
+
             if (type == MLAgentType.FLOW) {
-                result = extractFlowAgentResult(mlOutput);
+                dslQuery = extractFlowAgentResult(mlOutput);
             } else if (type == MLAgentType.CONVERSATIONAL) {
                 Map<String, String> conversationalResult = extractConversationalAgentResult(mlOutput, xContentRegistry);
-                result = conversationalResult.get("dsl_query");
+                dslQuery = conversationalResult.get("dsl_query");
+                agentStepsSummary = conversationalResult.get("agent_steps_summary");
             }
 
-            listener.onResponse(result);
+            listener.onResponse(new AgentExecutionDTO(dslQuery, agentStepsSummary));
         }, e -> RetryUtil.handleRetryOrFailure(e, retryTime, () -> {
             try {
                 retryableExecuteAgent(request, agenticQuery, agentId, agentInfo, xContentRegistry, retryTime + 1, listener);
