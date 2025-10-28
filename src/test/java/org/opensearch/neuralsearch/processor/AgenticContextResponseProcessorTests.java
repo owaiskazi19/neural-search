@@ -34,18 +34,17 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testConstructor() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
 
         assertEquals(PROCESSOR_TAG, processor.getTag());
         assertEquals(DESCRIPTION, processor.getDescription());
-        assertTrue(processor.isIncludeAgentSteps());
         assertFalse(processor.isIncludeDslQuery());
         assertFalse(processor.isIgnoreFailure());
         assertEquals(AgenticContextResponseProcessor.TYPE, processor.getType());
     }
 
     public void testProcessResponse_withoutContext() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
 
@@ -54,7 +53,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withNullContext() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
 
@@ -63,7 +62,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withEmptyContext() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -73,7 +72,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withNullAgentSteps() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -85,7 +84,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withValidAgentSteps() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -106,7 +105,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withExistingExtensions() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
 
         // Create response with existing extensions
@@ -127,7 +126,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withValidAgentStepsAndMemoryId() {
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -151,7 +150,7 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
 
     public void testProcessResponse_withOnlyMemoryId_AlwaysShown() {
         // Test that memory_id is always shown regardless of configuration
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false, false);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -182,7 +181,6 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
         assertEquals(PROCESSOR_TAG, processor.getTag());
         assertFalse(processor.isIgnoreFailure());
         // Test default values when no configuration is provided
-        assertFalse(processor.isIncludeAgentSteps());
         assertFalse(processor.isIncludeDslQuery());
     }
 
@@ -200,9 +198,9 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
         return new SearchResponse(sections, null, 1, 1, 0, 100, null, new ShardSearchFailure[0], SearchResponse.Clusters.EMPTY, null);
     }
 
-    public void testProcessResponse_withAgentStepsDisabled() {
-        // Test that agent steps are not included when includeAgentSteps is false
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false, false);
+    public void testProcessResponse_withAgentStepsInContext() {
+        // Test that agent steps are included when present in context
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -220,14 +218,14 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
         assertTrue(extensions.get(0) instanceof AgentStepsSearchExtBuilder);
 
         AgentStepsSearchExtBuilder extBuilder = (AgentStepsSearchExtBuilder) extensions.get(0);
-        assertNull(extBuilder.getAgentStepsSummary()); // Should be null when disabled
+        assertEquals(agentSteps, extBuilder.getAgentStepsSummary()); // Should be included when in context
         assertEquals(memoryId, extBuilder.getMemoryId()); // Memory ID always included
         assertNull(extBuilder.getDslQuery());
     }
 
     public void testProcessResponse_withDslQueryEnabled() {
         // Test that DSL query is included when includeDslQuery is true
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, false, true);
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -251,8 +249,8 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     }
 
     public void testProcessResponse_withAllFieldsEnabled() {
-        // Test that all fields are included when both flags are true
-        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true, true);
+        // Test that all fields are included when dsl_query is enabled and agent steps in context
+        AgenticContextResponseProcessor processor = new AgenticContextResponseProcessor(PROCESSOR_TAG, DESCRIPTION, false, true);
         SearchRequest request = mock(SearchRequest.class);
         SearchResponse response = createMockSearchResponse();
         PipelineProcessingContext context = new PipelineProcessingContext();
@@ -280,7 +278,6 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
     public void testFactory_withConfiguration() {
         AgenticContextResponseProcessor.Factory factory = new AgenticContextResponseProcessor.Factory();
         Map<String, Object> config = new HashMap<>();
-        config.put("agent_steps_summary", true);
         config.put("dsl_query", false);
 
         AgenticContextResponseProcessor processor = factory.create(null, PROCESSOR_TAG, DESCRIPTION, false, config, null);
@@ -289,7 +286,6 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
         assertEquals(DESCRIPTION, processor.getDescription());
         assertEquals(PROCESSOR_TAG, processor.getTag());
         assertFalse(processor.isIgnoreFailure());
-        assertTrue(processor.isIncludeAgentSteps());
         assertFalse(processor.isIncludeDslQuery());
     }
 
@@ -301,7 +297,6 @@ public class AgenticContextResponseProcessorTests extends OpenSearchTestCase {
         AgenticContextResponseProcessor processor = factory.create(null, PROCESSOR_TAG, DESCRIPTION, false, config, null);
 
         assertNotNull(processor);
-        assertFalse(processor.isIncludeAgentSteps()); // Should use default false
         assertTrue(processor.isIncludeDslQuery()); // Should use configured true
     }
 

@@ -65,7 +65,6 @@ import org.opensearch.neuralsearch.query.AgenticSearchQueryBuilder;
 import org.opensearch.neuralsearch.util.RetryUtil;
 import org.opensearch.neuralsearch.processor.highlight.SentenceHighlightingRequest;
 import org.opensearch.neuralsearch.highlight.SemanticHighlightingConstants;
-import java.util.HashMap;
 import org.opensearch.common.xcontent.XContentFactory;
 import org.opensearch.core.xcontent.XContentBuilder;
 
@@ -680,6 +679,7 @@ public class MLCommonsClientAccessor {
      * @param agentId agent id
      * @param agentInfo agent info
      * @param xContentRegistry xContentRegistry
+     * @param needsAgentSteps whether agent steps summary is needed
      * @param listener listener to be called with the agent execution result
      */
     public void executeAgent(
@@ -688,9 +688,10 @@ public class MLCommonsClientAccessor {
         @NonNull String agentId,
         @NonNull AgentInfoDTO agentInfo,
         @NonNull NamedXContentRegistry xContentRegistry,
+        boolean needsAgentSteps,
         @NonNull ActionListener<AgentExecutionDTO> listener
     ) throws IOException {
-        retryableExecuteAgent(request, agenticQuery, agentId, agentInfo, xContentRegistry, 0, listener);
+        retryableExecuteAgent(request, agenticQuery, agentId, agentInfo, xContentRegistry, needsAgentSteps, 0, listener);
     }
 
     /**
@@ -702,6 +703,7 @@ public class MLCommonsClientAccessor {
         String agentId,
         AgentInfoDTO agentInfo,
         NamedXContentRegistry xContentRegistry,
+        boolean needsAgentSteps,
         int retryTime,
         ActionListener<AgentExecutionDTO> listener
     ) throws IOException {
@@ -743,7 +745,7 @@ public class MLCommonsClientAccessor {
         }
 
         if (hasSystemPrompt == false && type != MLAgentType.FLOW) {
-            parameters.put("system_prompt", loadSystemPrompt());
+            parameters.put("system_prompt", loadSystemPrompt(needsAgentSteps));
         }
 
         if (hasUserPrompt == false && type != MLAgentType.FLOW) {
@@ -776,7 +778,16 @@ public class MLCommonsClientAccessor {
             listener.onResponse(new AgentExecutionDTO(removeTrailingDecimalZeros(dslQuery), agentStepsSummary, memoryId));
         }, e -> RetryUtil.handleRetryOrFailure(e, retryTime, () -> {
             try {
-                retryableExecuteAgent(request, agenticQuery, agentId, agentInfo, xContentRegistry, retryTime + 1, listener);
+                retryableExecuteAgent(
+                    request,
+                    agenticQuery,
+                    agentId,
+                    agentInfo,
+                    xContentRegistry,
+                    needsAgentSteps,
+                    retryTime + 1,
+                    listener
+                );
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -931,8 +942,9 @@ public class MLCommonsClientAccessor {
     /**
      * Load system prompt from resources file
      */
-    private String loadSystemPrompt() throws IOException {
-        var inputStream = getClass().getClassLoader().getResourceAsStream("agentic-system-prompt.txt");
+    private String loadSystemPrompt(boolean needsAgentSteps) throws IOException {
+        String fileName = needsAgentSteps ? "agentic-system-prompt.txt" : "agentic-system-prompt-without-summary.txt";
+        var inputStream = getClass().getClassLoader().getResourceAsStream(fileName);
         return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
     }
 

@@ -44,8 +44,6 @@ public class AgenticContextResponseProcessor implements SearchResponseProcessor 
     @Getter
     private final boolean ignoreFailure;
     @Getter
-    private final boolean includeAgentSteps;
-    @Getter
     private final boolean includeDslQuery;
 
     @Override
@@ -60,7 +58,7 @@ public class AgenticContextResponseProcessor implements SearchResponseProcessor 
             return response;
         }
 
-        String agentStepsStr = includeAgentSteps ? (String) requestContext.getAttribute(AGENT_STEPS_FIELD_NAME) : null;
+        String agentStepsStr = (String) requestContext.getAttribute(AGENT_STEPS_FIELD_NAME);
         String memoryIdStr = (String) requestContext.getAttribute(MEMORY_ID_FIELD_NAME);
         String dslQueryStr = includeDslQuery ? (String) requestContext.getAttribute(DSL_QUERY_FIELD_NAME) : null;
 
@@ -116,10 +114,9 @@ public class AgenticContextResponseProcessor implements SearchResponseProcessor 
             Map<String, Object> config,
             PipelineContext pipelineContext
         ) {
-            boolean includeAgentSteps = readBooleanProperty(TYPE, tag, config, "agent_steps_summary", false);
             boolean includeDslQuery = readBooleanProperty(TYPE, tag, config, "dsl_query", false);
 
-            return new AgenticContextResponseProcessor(tag, description, ignoreFailure, includeAgentSteps, includeDslQuery);
+            return new AgenticContextResponseProcessor(tag, description, ignoreFailure, includeDslQuery);
         }
     }
 }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Enhancements
 - [Agentic Search] Add conversation search support with agentic search ([#1626](https://github.com/opensearch-project/neural-search/pull/1626))
+- [Agentic Search] Fix latency caused due to agent summary
 
 ### Bug Fixes
 
